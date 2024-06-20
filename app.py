@@ -4,30 +4,18 @@ import string
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 
-# Initialization and global variables
 app = Flask(__name__)
-games = {}                          # Dict of all games
+games = {}
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-
-# Helper functions
 def generate_game_id():
-    """
-    :return: 6 letter unique alphanumeric string
-    """
     while True:
         game_id = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
         if game_id not in games:
             return game_id
 
-
 def check_winner(board, player):
-    """
-    :param board: Game's board (list of strings with size 9)
-    :param player: Player's character (X or O)
-    :return: Boole, whether the player is indeed the winner
-    """
     win_conditions = [
         [board[0], board[1], board[2]],
         [board[3], board[4], board[5]],
@@ -41,12 +29,10 @@ def check_winner(board, player):
     return [player, player, player] in win_conditions
 
 def delete_game(game_id):
-    """
-    Delete game by game ID
-    """
     if game_id in games:
         del games[game_id]
         print(f"Game {game_id} deleted.")
+
 def cleanup_games():
     now = datetime.now()
     for game_id in list(games.keys()):
@@ -57,46 +43,32 @@ def cleanup_games():
 
 scheduler.add_job(cleanup_games, 'interval', minutes=5)
 
-# Flask routing
 @app.route('/')
 def index():
     return render_template('index.html')
 
-
 @app.route('/create-game', methods=['POST'])
 def create_game():
-    """
-    Initializes a game with a random game-id
-    """
     game_id = generate_game_id()
     games[game_id] = {'board': [''] * 9, 'currentPlayer': 'X', 'finished': False, 'last_activity': datetime.now()}
     print(f"Game {game_id} created.")
     return jsonify({'status': 'Game created!', 'gameId': game_id})
 
-
 @app.route('/game/<game_id>', methods=['GET'])
 def game(game_id):
-    """
-    Joins a game with game id as URl
-    """
     if game_id in games:
-        return jsonify({'status': 'Game joined', 'game': games[game_id]})
+        return render_template('game.html', game_id=game_id)
     else:
         return jsonify({'status': 'Game not found'}), 404
 
-
 @app.route('/make-move', methods=['POST'])
 def make_move():
-    """
-    Making move by POST
-    """
     game_id = request.json.get('gameId')
     index = request.json.get('index')
     player = request.json.get('player')
 
     if game_id in games:
         game = games[game_id]
-        # Handles win checking
         if game['board'][index] == '' and game['currentPlayer'] == player:
             game['board'][index] = player
             game['last_activity'] = datetime.now()
@@ -115,7 +87,6 @@ def make_move():
             return jsonify({'status': 'Invalid move or wrong player turn'}), 400
     else:
         return jsonify({'status': 'Game not found'}), 404
-
 
 if __name__ == '__main__':
     try:
