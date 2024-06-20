@@ -12,6 +12,18 @@ body {
     align-items: center;
 }
 
+.menu {
+    text-align: center;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(50, 50, 50, 0.5);
+}
+
+#game-link {
+    width: 100%;
+    padding: 5px;
+}
+
 .board {
     width: 320px;
     height: 320px;
